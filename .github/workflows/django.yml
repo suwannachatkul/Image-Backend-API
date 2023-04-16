@@ -43,8 +43,10 @@ jobs:
 
     - name: Run database migrations
       run: |
+        cd image_backend
         python manage.py migrate --noinput
 
     - name: Run tests
       run: |
+        cd image_backend
         python manage.py test
