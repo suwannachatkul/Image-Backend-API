@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+import datetime
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +39,10 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework",
+    'rest_framework.authtoken',
+    "image_api",
+    "auth_api",
 ]
 
 MIDDLEWARE = [
@@ -74,10 +80,22 @@ WSGI_APPLICATION = "image_backend.wsgi.application"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'myimage',
+        'USER': 'postgres',
+        'PASSWORD': '10475',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    },
+    'TEST': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'myimage-test',
+        'USER': 'postgres',
+        'PASSWORD': '10475',
+        'HOST': 'localhost',
+        'PORT': '5432',
+    },
 }
 
 
@@ -115,3 +133,19 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')
+MEDIA_URL = '/media/'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        # 'rest_framework.authentication.TokenAuthentication',
+        'auth_api.authentication.BearerAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+TOKEN_EXPIRE_TIME = datetime.timedelta(seconds=10)
