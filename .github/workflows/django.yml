@@ -19,6 +19,7 @@ jobs:
       run: pip install -r requirements.txt
     - name: Run Tests
       run: |
+        cd image_backend
         python manage.py test
     - name: Upload Test Results
       uses: actions/upload-artifact@v2
