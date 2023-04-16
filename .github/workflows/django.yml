@@ -1,33 +1,45 @@
 name: Django CI
-on:
-  pull_request:
-    branches:
-      - main
-  workflow_dispatch:
+
+on: [push, pull_request, workflow_dispatch]
+
+
 jobs:
-  test:
+  build:
+
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.8, 3.9]
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_DB: myimage
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: im@geb@ckend
+        ports:
+        - 5432:5432
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python 3.9
       uses: actions/setup-python@v2
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Dependencies
-      run: pip install -r requirements.txt
-    - name: Migrate Database
+        python-version: 3.9
+
+    - name: Install dependencies
       run: |
-        cd image_backend
-        python manage.py migrate
-    - name: Run Tests
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Wait for postgres to start
       run: |
-        cd image_backend
+        dockerize -wait tcp://localhost:5432 -timeout 1m
+
+    - name: Run database migrations
+      run: |
+        python manage.py migrate --noinput
+
+    - name: Run tests
+      run: |
         python manage.py test
-    - name: Upload Test Results
-      uses: actions/upload-artifact@v2
-      with:
-        name: Test Results
-        path: test-results.xml
