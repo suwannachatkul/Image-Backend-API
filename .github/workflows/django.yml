@@ -44,7 +44,8 @@ jobs:
     - name: Run database migrations
       run: |
         cd image_backend
-        python manage.py migrate --noinput
+        python manage.py makemigrations
+        python manage.py migrate
 
     - name: Run tests
       run: |
