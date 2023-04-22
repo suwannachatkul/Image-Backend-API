@@ -100,5 +100,5 @@ curl -X PUT \
 ## Tests
 
 ```
-python manage.py test
+python manage.py test --settings=image_backend.settings_test
 ```
