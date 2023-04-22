@@ -4,6 +4,7 @@ from django.core.files.uploadedfile import InMemoryUploadedFile
 from .util.image_util import ImageUtil
 import json
 
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
@@ -17,6 +18,7 @@ class TagListingField(serializers.RelatedField):
 
 class ImageSerializer(serializers.ModelSerializer):
     tags = TagListingField(many=True, read_only=True)
+
     class Meta:
         model = ImageInfo
         fields = ('id', 'image', 'title', 'description', 'tags')
@@ -24,21 +26,26 @@ class ImageSerializer(serializers.ModelSerializer):
 
 class ImageUploadSerializer(serializers.ModelSerializer):
     MAX_SIZE = 5 * 1024 * 1024  # 1MB
-    
-    tags = serializers.ListField(child=serializers.CharField(max_length=50), write_only=True)
+
+    tags = serializers.ListField(
+        child=serializers.CharField(max_length=50), write_only=True)
     tags_info = serializers.SerializerMethodField()
 
     class Meta:
         model = ImageInfo
         fields = ('image', 'title', 'description', 'tags', 'tags_info')
-    
+
     def get_tags_info(self, obj):
         tags_data = dict(self.initial_data).get('tags', None)
         return json.dumps(tags_data).replace('\"', '')
 
     def validate_image(self, image):
         if image.size > self.MAX_SIZE:
-            resized_image = ImageUtil.optimize_imgsize(image)         
+            resized_image = ImageUtil.optimize_imgsize(image)
+            if not image.name.endswith(".jpg"):
+                image.name = image.name.replace(
+                    image.name.split(".")[-1], "jpg", 1
+                )
             new_image = InMemoryUploadedFile(
                 resized_image,
                 None,
@@ -52,7 +59,6 @@ class ImageUploadSerializer(serializers.ModelSerializer):
             return new_image
         return image
 
-
     def create(self, validated_data):
         tags_data = validated_data.pop('tags')
         tags = []
@@ -63,4 +69,3 @@ class ImageUploadSerializer(serializers.ModelSerializer):
         instance = ImageInfo.objects.create(**validated_data)
         instance.tags.set(tags)
         return instance
-
