@@ -1,6 +1,6 @@
 # Image Management API
 
-This API allows users to upload and manage images. It provides endpoints to perform CRUD (create, read, update, delete) operations on images.
+Image Backend is a project developed based on Django Rest Framework and provides API endpoints for managing and serving images.
 
 ## Getting Started
 
@@ -11,10 +11,10 @@ This API allows users to upload and manage images. It provides endpoints to perf
 
 ### Installing
 
-1. Clone this repository:
+1. Clone this repository
 
 
-2. Navigate to the project directory:
+2. Navigate to the project directory
 
 
 3. Install dependencies using Pipenv:
@@ -100,5 +100,5 @@ curl -X PUT \
 ## Tests
 
 ```
-python manage.py tests
+python manage.py test
 ```
