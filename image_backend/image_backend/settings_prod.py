@@ -24,8 +24,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
 ALLOWED_HOSTS = []
 
@@ -83,18 +81,18 @@ WSGI_APPLICATION = "image_backend.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'myimage',
-        'USER': 'postgres',
-        'PASSWORD': 'im@geb@ckend',
-        'HOST': 'localhost',
+        'NAME': os.environ.get('POSTGRES_DB_NAME'),
+        'USER': os.environ.get('POSTGRES_DB_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_DB_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_DB_HOST'),
         'PORT': '5432',
     },
     'TEST': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'myimage-test',
-        'USER': 'postgres',
-        'PASSWORD': 'im@geb@ckend',
-        'HOST': 'localhost',
+        'NAME': os.environ.get('POSTGRES_DB_NAME') + "_test",
+        'USER': os.environ.get('POSTGRES_DB_USER'),
+        'PASSWORD': os.environ.get('POSTGRES_DB_PASSWORD'),
+        'HOST': os.environ.get('POSTGRES_DB_HOST'),
         'PORT': '5432',
     },
 }
@@ -140,7 +138,6 @@ MEDIA_URL = '/media/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework.authentication.TokenAuthentication',
         'auth_api.authentication.BearerAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
