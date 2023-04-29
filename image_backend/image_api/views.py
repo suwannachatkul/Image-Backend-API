@@ -10,13 +10,13 @@ from .serializers import ImageSerializer, TagSerializer, ImageUploadSerializer
 from rest_framework.permissions import IsAuthenticated
 
 
-class TagList(generics.ListAPIView):
+class TagListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
-class ImageList(generics.ListAPIView):
+class ImageListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ImageSerializer
 
@@ -32,7 +32,7 @@ class ImageList(generics.ListAPIView):
         return queryset
 
 
-class ImageRetrieve(generics.RetrieveAPIView):
+class ImageRetrieveView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     queryset = ImageInfo.objects.all()
     serializer_class = ImageSerializer
