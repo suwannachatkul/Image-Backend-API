@@ -72,6 +72,13 @@ curl -X GET \
   -H 'Authorization: Bearer <your_token_here>'
 ```
 
+Get a list of images with tags: ["landscape", "Tokyo"] with limit to 10
+```
+curl -X GET \
+  http://localhost:8000/api/v1/image/?tags[]=landscape&tags[]=Tokyo&limit=10 \
+  -H 'Authorization: Bearer <your_token_here>'
+```
+
 To upload a new image:
 ```
 curl -X POST \
