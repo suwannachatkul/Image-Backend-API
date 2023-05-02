@@ -43,13 +43,14 @@ The server should now be running at http://localhost:8000/.
 
 The following endpoints are available:
 
-| Endpoint | HTTP Method | Parameters | Description |
-| -------- | ----------- | ---------- | ----------- |
-| /api/auth/token/ | POST | {"username": string, "password": string} | Obtain a token for authentication. |
-| /api/v1/image/ | GET | - | Get a list of all images |
-| /api/v1/image/upload | POST | {"image": file, "title": string, "description": string, "tags": [string1, string2]} | Upload a new image |
-| /api/v1/image/:id/ | GET | - | Get details about a specific image by id |
-| /api/v1/image/tag/ | GET | - | Get a list of all tags |
+| Endpoint | HTTP Method | Body Parameters | Query Parameters | Description |
+| -------- | ----------- | --------------- | ---------------- | ----------- |
+| /api/auth/token/ | POST | {"username": string, "password": string} | - | Obtain a token for authentication. |
+| /api/v1/image/ | GET | - | ["tags": string, "created_date": datetime, "created_date__after": datetime, "created_date__before": datetime, "random": bool, "limit": int] | Get a list of images |
+| /api/v1/image/upload | POST | {"image": file, "title": string, "description": string, "tags": [string1, string2]} | - | Upload a new image |
+| /api/v1/image/:id/ | GET | - | - | Get details about a specific image by id |
+| /api/v1/image/:id/update | PUT,PATCH |  {"title": string, "description": string, "tags": [string1, string2]} | - | Update details of an image |
+| /api/v1/image/tag/ | GET | - | - | Get a list of all tags |
 
 ### Example Usage
 
