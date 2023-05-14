@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import ImageInfo, Tag
 from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.http import QueryDict
 from .util.image_util import ImageUtil
 import json
 
@@ -28,7 +29,7 @@ class ImageUploadSerializer(serializers.ModelSerializer):
     MAX_SIZE = 5 * 1024 * 1024  # 1MB
 
     tags = serializers.ListField(
-        child=serializers.CharField(max_length=50), write_only=True)
+        child=serializers.CharField(max_length=50), write_only=True, required=False)
     tags_info = serializers.SerializerMethodField()
 
     class Meta:
@@ -36,7 +37,9 @@ class ImageUploadSerializer(serializers.ModelSerializer):
         fields = ('image', 'title', 'description', 'tags', 'tags_info')
 
     def get_tags_info(self, obj):
-        tags_data = dict(self.initial_data).get('tags', None)
+        tags_data = dict(self.initial_data).get('tags', [])
+        tags_data_alternate = dict(self.initial_data).get('tags[]', [])
+        tags_data.extend(tags_data_alternate)
         return json.dumps(tags_data).replace('\"', '')
 
     def validate_image(self, image):
@@ -58,6 +61,22 @@ class ImageUploadSerializer(serializers.ModelSerializer):
                 raise ValidationError("Could not resize the image.")
             return new_image
         return image
+
+    def to_internal_value(self, data):
+        # handle alternate data key for tags "tags[]"
+        if type(data) == QueryDict:
+            tags_data = data.getlist('tags', [])
+            tags_data_alternate = data.getlist('tags[]', [])
+        else:
+            tags_data = data.get('tags', [])
+            tags_data_alternate = data.get('tags[]', [])
+
+        if tags_data_alternate:
+            tags_data.extend(tags_data_alternate)
+
+        validated_data = super().to_internal_value(data)
+        validated_data['tags'] = tags_data
+        return validated_data
 
     def create(self, validated_data):
         tags_data = validated_data.pop('tags')
