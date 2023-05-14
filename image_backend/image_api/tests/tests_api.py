@@ -1,18 +1,17 @@
 import os
-from django.test import TestCase, RequestFactory
-from django.urls import reverse
-from django.contrib.auth.models import User
-from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
-from rest_framework import status
-from rest_framework.test import APITestCase, force_authenticate, APIClient
-
-
-from PIL import Image
 from io import BytesIO
 
-from ..serializers import ImageUploadSerializer
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import RequestFactory, TestCase
+from django.urls import reverse
+from PIL import Image
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase, force_authenticate
+
 from ..models import ImageInfo, Tag
+from ..serializers import ImageUploadSerializer
 
 
 def create_test_image(img_size=(100,100)):

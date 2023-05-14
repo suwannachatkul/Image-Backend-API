@@ -1,7 +1,7 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework import routers
-from .views import TagList, ImageList, ImageRetrieve, ImageUploadView
 
+from .views import ImageList, ImageRetrieve, ImageUploadView, TagList
 
 urlpatterns = [
     path('image/', ImageList.as_view(), name='image-list'),    

@@ -1,15 +1,16 @@
 import os
 from datetime import datetime
-from django.test import TestCase
+from io import BytesIO
+from unittest import mock
+
+from django.conf import settings
 from django.core.files import File
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.conf import settings
-from unittest import mock
-from io import BytesIO
+from django.test import TestCase
 from PIL import Image
 
 from ..models import ImageInfo, Tag
-from ..serializers import TagSerializer, ImageSerializer, ImageUploadSerializer
+from ..serializers import ImageSerializer, ImageUploadSerializer, TagSerializer
 
 
 def create_test_image(img_size=(100,100)):

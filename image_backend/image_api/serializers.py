@@ -1,9 +1,11 @@
-from rest_framework import serializers
-from .models import ImageInfo, Tag
+import json
+
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.http import QueryDict
+from rest_framework import serializers
+
+from .models import ImageInfo, Tag
 from .util.image_util import ImageUtil
-import json
 
 
 class TagSerializer(serializers.ModelSerializer):
