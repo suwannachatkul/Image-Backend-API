@@ -77,6 +77,12 @@ class ImageUploadSerializerTest(TestCase):
             'description': 'Test Image Description',
             'tags': ['Tag 1', 'Tag 2']
         }
+        self.valid_image_data2 = {
+            'image': self.valid_image,
+            'title': 'Test Image Title',
+            'description': 'Test Image Description',
+            'tags[]': ['Tag 1', 'Tag 2']
+        }
 
     def test_valid_input_creates_image_object(self):
         serializer = ImageUploadSerializer(data=self.valid_image_data)
@@ -91,6 +97,14 @@ class ImageUploadSerializerTest(TestCase):
 
     def test_tags_field_can_be_set_with_list_of_tag_names(self):
         serializer = ImageUploadSerializer(data=self.valid_image_data)
+        self.assertTrue(serializer.is_valid())
+        serializer.save()
+        image = ImageInfo.objects.get(title='Test Image Title')
+        self.assertCountEqual(image.tags.values_list('name', flat=True), ['Tag 1', 'Tag 2'])
+        os.remove(settings.MEDIA_ROOT + image.image.name)
+    
+    def test_tags_field_can_be_set_with_list_of_tag_names_with_alt_tags_key(self):
+        serializer = ImageUploadSerializer(data=self.valid_image_data2)
         self.assertTrue(serializer.is_valid())
         serializer.save()
         image = ImageInfo.objects.get(title='Test Image Title')
