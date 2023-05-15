@@ -92,3 +92,29 @@ class ImageUploadTest(APITestCase):
         response = self.client.post(self.url_image_upload, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(ImageInfo.objects.count(), 0)
+
+
+class ImageUpdateTest(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_superuser(username='testuser', password='test')
+        self.client.force_authenticate(user=self.user)
+
+        self.image_info = ImageInfo.objects.create(title='Test Image', description='This is a test image')
+        self.tag1 = Tag.objects.create(name="tag1", name_slug="tag1")
+        self.tag2 = Tag.objects.create(name="tag2", name_slug="tag2")
+        self.image_info.tags.set([self.tag1, self.tag2])
+
+        self.url_image_update = reverse('image-update', kwargs={'pk': self.image_info.pk})
+
+    def test_valid_image_update(self):
+        data = {
+            'title': 'New Test Image',
+            'description': 'This is a new test image',
+            'tags': ['tag1']
+        }
+        response = self.client.patch(self.url_image_update, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.image_info.refresh_from_db()
+        self.assertEqual(self.image_info.title, 'New Test Image')
+        self.assertEqual(self.image_info.description, 'This is a new test image')
+        self.assertCountEqual(self.image_info.tags.all(), [self.tag1])

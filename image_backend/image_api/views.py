@@ -7,17 +7,17 @@ from rest_framework import generics, status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.views import APIView
 from .models import ImageInfo, Tag
-from .serializers import ImageSerializer, TagSerializer, ImageUploadSerializer
+from .serializers import ImageSerializer, TagSerializer, ImageUploadSerializer, ImageUpdateSerializer
 from rest_framework.permissions import IsAuthenticated
 
 
-class TagList(generics.ListAPIView):
+class TagListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
-class ImageList(generics.ListAPIView):
+class ImageListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ImageSerializer
 
@@ -61,7 +61,7 @@ class ImageList(generics.ListAPIView):
         return queryset
 
 
-class ImageRetrieve(generics.RetrieveAPIView):
+class ImageRetrieveView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     queryset = ImageInfo.objects.all()
     serializer_class = ImageSerializer
@@ -78,3 +78,8 @@ class ImageUploadView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ImageUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = ImageInfo.objects.all()
+    serializer_class = ImageUpdateSerializer
