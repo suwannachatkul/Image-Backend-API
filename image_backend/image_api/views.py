@@ -48,16 +48,19 @@ class ImageList(generics.ListAPIView):
         elif created_date_before:
             date = datetime.strptime(created_date_before, '%Y-%m-%d')
             queryset = queryset.filter(created_at__date__lt=date)
-        
+
         # random
         is_random = self.request.query_params.get('random')
         if is_random == 'true':
             queryset = queryset.order_by('?')
 
-        # limit
-        limit = self.request.query_params.get('limit')
+        # limit offset
+        limit = self.request.query_params.get('limit', None)
+        offset = self.request.query_params.get('offset', 0)
         if limit:
-            queryset = queryset[:int(limit)]
+            queryset = queryset[int(offset):int(offset)+int(limit)]
+        else:
+            queryset = queryset[int(offset):]
 
         return queryset
 
