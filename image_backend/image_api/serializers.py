@@ -9,9 +9,11 @@ from .util.image_util import ImageUtil
 
 
 class TagSerializer(serializers.ModelSerializer):
+    label = serializers.CharField(source='name')
+    value = serializers.CharField(source='name_slug')
     class Meta:
         model = Tag
-        fields = ('name', 'name_slug')
+        fields = ('label', 'value')
 
 
 class TagListingField(serializers.RelatedField):
