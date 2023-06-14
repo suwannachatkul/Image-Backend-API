@@ -52,3 +52,33 @@ class ImageUploadSerializer(serializers.ModelSerializer):
         instance = ImageInfo.objects.create(**validated_data)
         instance.tags.set(tags)
         return instance
+
+
+class ImageUpdateSerializer(serializers.ModelSerializer):
+    tags = serializers.ListField(
+        child=serializers.CharField(max_length=50), required=False, write_only=True)
+
+    class Meta:
+        model = ImageInfo
+        fields = ('id', 'title', 'description', 'tags')
+
+    def to_representation(self, instance):
+        representation = super().to_representation(instance)
+        representation['tags'] = instance.tags.values_list('name', flat=True)
+        return representation
+
+    def update(self, instance, validated_data):
+        tags = validated_data.pop('tags', None)
+        # update fields other than tags
+        instance.title = validated_data.get('title', instance.title)
+        instance.description = validated_data.get('description', instance.description)
+
+        # update tags
+        if tags is not None:
+            instance.tags.clear()  # remove old tags
+            for tag_name in tags:
+                tag, created = Tag.objects.get_or_create(name=tag_name)
+                instance.tags.add(tag)
+
+        instance.save()
+        return instance

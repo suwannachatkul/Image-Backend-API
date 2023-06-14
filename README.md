@@ -52,6 +52,7 @@ The following endpoints are available:
 | /api/v1/image/:id/update | PUT,PATCH |  {"title": string, "description": string, "tags": [string1, string2]} | - | Update details of an image |
 | /api/v1/image/tag/ | GET | - | - | Get a list of all tags |
 
+
 ### Example Usage
 
 Obtain a token for authentication
@@ -98,9 +99,20 @@ curl -X GET \
   -H 'Authorization: Bearer <your_token_here>'
 ```
 
+To update a image info:
+```
+curl -X PATCH \
+  http://localhost:8000/api/v1/image/:id/update \
+  -H 'Authorization: Bearer <your_token_here>' \
+  -H 'Content-Type: application/json' \
+  -F 'title=My New Image Title' \
+  -F 'description=This is an image updated description' \
+  -F 'tags=["tag1", "tag2"]'
+```
+
 Get a list of all tags
 ```
-curl -X PUT \
+curl -X GET \
   http://localhost:8000/api/v1/image/tag/ \
   -H 'Authorization: Bearer <your_token_here>'
 ```

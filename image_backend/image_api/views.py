@@ -12,17 +12,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import ImageInfo, Tag
-from .serializers import ImageSerializer, ImageUploadSerializer, TagSerializer
+from .serializers import ImageSerializer, ImageUpdateSerializer, ImageUploadSerializer, TagSerializer
 from .util.image_util import ImageUtil
 
 
-class TagList(generics.ListAPIView):
+class TagListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
-class ImageList(generics.ListAPIView):
+class ImageListView(generics.ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = ImageSerializer
 
@@ -69,7 +69,7 @@ class ImageList(generics.ListAPIView):
         return queryset
 
 
-class ImageRetrieve(generics.RetrieveAPIView):
+class ImageRetrieveView(generics.RetrieveAPIView):
     permission_classes = [IsAuthenticated]
     queryset = ImageInfo.objects.all()
     serializer_class = ImageSerializer
@@ -152,3 +152,9 @@ class ImageUploadView(APIView):
             raise ValidationError("Could not resize the image.")
 
         return new_image
+
+
+class ImageUpdateView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = ImageInfo.objects.all()
+    serializer_class = ImageUpdateSerializer
