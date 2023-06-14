@@ -12,18 +12,22 @@ from rest_framework.test import APIClient, APITestCase, force_authenticate
 
 from ..models import ImageInfo, Tag
 from ..serializers import ImageUploadSerializer
+from ..views import ImageUploadView
 
 
-def create_test_image(img_size=(100,100)):
+def create_test_image(img_size=(100, 100), file_ext='png', file_size=None):
     file = BytesIO()
     image = Image.new('RGB', img_size, 'white')
-    image.save(file, 'png')
-    file.name = 'test_image.png'
+    image.save(file, file_ext)
+    file.name = 'test_image.' + file_ext
+    if file_size:
+        file.size = file_size
     file.seek(0)
     return SimpleUploadedFile(file.name, file.read(), content_type='multipart/form-data')
 
 
 class ImageAndTagGetTest(APITestCase):
+
     def setUp(self):
         self.user = User.objects.create_superuser(username='testuser', password='test')
         self.client.force_authenticate(user=self.user)
@@ -55,6 +59,7 @@ class ImageAndTagGetTest(APITestCase):
 
 
 class ImageUploadTest(APITestCase):
+
     def setUp(self):
         self.user = User.objects.create_superuser(username='testuser', password='test')
         self.client.force_authenticate(user=self.user)
@@ -63,21 +68,23 @@ class ImageUploadTest(APITestCase):
         self.tag2 = Tag.objects.create(name="tag2", name_slug="tag2")
 
         self.url_image_upload = reverse('image-upload')
-    
+
     def test_valid_image_upload(self):
         data = {
             'image': create_test_image(),
             'title': 'Test Image',
             'description': 'This is a test image',
-            'tags': ['tag1', 'tag2']
+            'tags[]': ['tag1', 'tag2']
         }
         response = self.client.post(self.url_image_upload, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         image_info = ImageInfo.objects.get(title='Test Image')
-        self.assertEqual(image_info.description, 'This is a test image')
-        self.assertCountEqual(image_info.tags.all(), [self.tag1, self.tag2])
-        os.remove(settings.MEDIA_ROOT + image_info.image.name)
-    
+        try:
+            self.assertEqual(image_info.description, 'This is a test image')
+            self.assertCountEqual(image_info.tags.all(), [self.tag1, self.tag2])
+        finally:
+            os.remove(settings.MEDIA_ROOT + image_info.image.name)
+
     def test_invalid_image_upload(self):
         invalid_image_file = BytesIO()
         invalid_image_file.write(b"invalid image data")
@@ -86,8 +93,41 @@ class ImageUploadTest(APITestCase):
             'image': SimpleUploadedFile('test.jpg', invalid_image_file.read(), content_type='multipart/form-data'),
             'title': 'Test Image',
             'description': 'This is a test image',
-            'tags': ['tag1', 'tag2']
+            'tags[]': ['tag1', 'tag2']
         }
         response = self.client.post(self.url_image_upload, data, format='multipart')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(ImageInfo.objects.count(), 0)
+
+    def test_image_upload_with_file_ext_param(self):
+        data = {
+            'image': create_test_image(),
+            'title': 'Test Image',
+            'description': 'This is a test image',
+            'tags[]': ['tag1', 'tag2']
+        }
+        response = self.client.post(f"{self.url_image_upload}?file_ext=webp", data, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        image_info = ImageInfo.objects.get(title='Test Image')
+        try:
+            image = Image.open(settings.MEDIA_ROOT + image_info.image.name)
+            image.close()
+            self.assertEqual(image.format.lower(), 'webp')
+        finally:
+            os.remove(settings.MEDIA_ROOT + image_info.image.name)
+
+    def test_uploaded_image_is_resized_if_it_exceeds_maximum_file_size(self):
+        file_size = ImageUploadView.MAX_IMG_SIZE
+        width = 6000
+        height = 5000
+        large_image = create_test_image(img_size=(width, height), file_size=file_size + 100)
+        data = {'image': large_image, 'title': 'Test Image Large'}
+        response = self.client.post(self.url_image_upload, data, format='multipart')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        image_info = ImageInfo.objects.get(title='Test Image Large')
+        try:
+            self.assertLess(image_info.image.size, file_size)
+        finally:
+            os.remove(settings.MEDIA_ROOT + image_info.image.name)
