@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from io import BytesIO
 
 from django.conf import settings
@@ -6,6 +7,7 @@ from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils import timezone
 from PIL import Image
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase, force_authenticate
@@ -36,6 +38,11 @@ class ImageAndTagGetTest(APITestCase):
         self.image2 = ImageInfo.objects.create(title='image2', description='description2')
         self.tag1 = Tag.objects.create(name='tag1')
         self.tag2 = Tag.objects.create(name='tag2')
+        # Create images with specific created_at dates
+        self.image1.created_at = timezone.datetime(2023, 6, 1, tzinfo=timezone.get_current_timezone())
+        self.image1.save()
+        self.image2.created_at = timezone.datetime(2023, 6, 15, tzinfo=timezone.get_current_timezone())
+        self.image2.save()
 
         self.url_image_list = reverse('image-list')
         self.url_tag_list = reverse('tag-list')
@@ -56,7 +63,47 @@ class ImageAndTagGetTest(APITestCase):
         response = self.client.get(self.url_image_list, {'tags': ['tag1']})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
+        self.assertTrue('tag1' in response.data[0]['tags'])
 
+    def test_filter_image_list_by_created_date(self):
+        response_exact_date = self.client.get(self.url_image_list, {'created_date': '2023-06-01'})
+        self.assertEqual(response_exact_date.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_exact_date.data), 1)
+
+        response_after = self.client.get(self.url_image_list, {'created_date__after': '2023-06-14'})
+        self.assertEqual(response_after.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_after.data), 1)
+        self.assertEqual(response_after.data[0]['title'], 'image2')
+
+        response_before = self.client.get(self.url_image_list, {'created_date__before': '2023-06-02'})
+        self.assertEqual(response_before.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_before.data), 1)
+        self.assertEqual(response_before.data[0]['title'], 'image1')
+
+        response_before = self.client.get(
+            self.url_image_list, {
+                'created_date__after': '2023-06-01', 'created_date__before': '2023-06-15'
+            }
+        )
+        self.assertEqual(response_before.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_before.data), 2)
+
+        response_before = self.client.get(
+            self.url_image_list, {
+                'created_date': '2023-06-01', 'created_date__after': '2023-06-01', 'created_date__before': '2023-06-15'
+            }
+        )
+        self.assertEqual(response_before.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_apply_limit_and_offset_to_image_list(self):
+        # Assuming you have at least 5 images in the database
+        response_off1_lim1 = self.client.get(self.url_image_list, {'limit': 1, 'offset': 1})
+        self.assertEqual(response_off1_lim1.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_off1_lim1.data), 1)
+
+        response_off0_lim2 = self.client.get(self.url_image_list, {'limit': 2, 'offset': 0})
+        self.assertEqual(response_off0_lim2.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_off0_lim2.data), 2)
 
 class ImageUploadTest(APITestCase):
 
@@ -134,6 +181,7 @@ class ImageUploadTest(APITestCase):
 
 
 class ImageUpdateTest(APITestCase):
+
     def setUp(self):
         self.user = User.objects.create_superuser(username='testuser', password='test')
         self.client.force_authenticate(user=self.user)
@@ -146,11 +194,7 @@ class ImageUpdateTest(APITestCase):
         self.url_image_update = reverse('image-update', kwargs={'pk': self.image_info.pk})
 
     def test_valid_image_update(self):
-        data = {
-            'title': 'New Test Image',
-            'description': 'This is a new test image',
-            'tags': ['tag1']
-        }
+        data = {'title': 'New Test Image', 'description': 'This is a new test image', 'tags': ['tag1']}
         response = self.client.patch(self.url_image_update, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.image_info.refresh_from_db()
