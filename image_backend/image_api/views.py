@@ -28,20 +28,31 @@ class ImageListView(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = ImageInfo.objects.all()
-        # tags filter
-        tags = self.request.query_params.getlist('tags[]') + self.request.query_params.getlist('tags')
-        if tags:
-            queryset = queryset.filter(tags__name__in=tags)
 
-        # created_date filter
+        queryset = self.__filter_by_tags(queryset)
+        queryset = self.__filter_by_created_date(queryset)
+        queryset = self.__order_by_random(queryset)
+        queryset = self.__apply_limit_offset(queryset)
+
+        return queryset
+
+    def __filter_by_tags(self, queryset):
+        tags = self.request.query_params.getlist('tags')
+        if tags:
+            queryset = queryset.filter(tags__name__in=tags).distinct()
+        return queryset
+
+    def __filter_by_created_date(self, queryset):
         created_date_exact = self.request.query_params.get('created_date')
+        created_date_after = self.request.query_params.get('created_date__after')
+        created_date_before = self.request.query_params.get('created_date__before')
+
         if created_date_exact:
+            if created_date_after or created_date_before:
+                raise ValidationError("Invalid query parameters. 'created_date' cannot be used with 'created_date__after' or 'created_date__before'.")
             date = datetime.strptime(created_date_exact, '%Y-%m-%d')
             queryset = queryset.filter(created_at__date=date)
 
-        # create_date range filter
-        created_date_after = self.request.query_params.get('created_date__after')
-        created_date_before = self.request.query_params.get('created_date__before')
         if created_date_after and created_date_before:
             date_after = datetime.strptime(created_date_after, '%Y-%m-%d')
             date_before = datetime.strptime(created_date_before, '%Y-%m-%d')
@@ -52,20 +63,21 @@ class ImageListView(generics.ListAPIView):
         elif created_date_before:
             date = datetime.strptime(created_date_before, '%Y-%m-%d')
             queryset = queryset.filter(created_at__date__lt=date)
+        return queryset
 
-        # random
+    def __order_by_random(self, queryset):
         is_random = self.request.query_params.get('random')
         if is_random == 'true':
             queryset = queryset.order_by('?')
+        return queryset
 
-        # limit offset
+    def __apply_limit_offset(self, queryset):
         limit = self.request.query_params.get('limit', None)
         offset = self.request.query_params.get('offset', 0)
         if limit:
             queryset = queryset[int(offset):int(offset) + int(limit)]
         else:
             queryset = queryset[int(offset):]
-
         return queryset
 
 
