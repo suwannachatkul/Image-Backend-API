@@ -37,7 +37,7 @@ class ImageListView(generics.ListAPIView):
         return queryset
 
     def __filter_by_tags(self, queryset):
-        tags = self.request.query_params.getlist('tags')
+        tags = self.request.query_params.getlist('tags') + self.request.query_params.getlist('tags[]')
         if tags:
             queryset = queryset.filter(tags__name__in=tags).distinct()
         return queryset
