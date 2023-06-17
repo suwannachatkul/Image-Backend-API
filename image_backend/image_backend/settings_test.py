@@ -39,8 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "corsheaders",
     "rest_framework",
-    'rest_framework.authtoken',
     "image_api",
     "auth_api",
 ]
@@ -48,6 +48,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
@@ -62,14 +63,16 @@ TEMPLATES = [
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [],
         "APP_DIRS": True,
-        "OPTIONS": {
-            "context_processors": [
-                "django.template.context_processors.debug",
-                "django.template.context_processors.request",
-                "django.contrib.auth.context_processors.auth",
-                "django.contrib.messages.context_processors.messages",
-            ],
-        },
+        "OPTIONS":
+            {
+                "context_processors":
+                    [
+                        "django.template.context_processors.debug",
+                        "django.template.context_processors.request",
+                        "django.contrib.auth.context_processors.auth",
+                        "django.contrib.messages.context_processors.messages",
+                    ],
+            },
     },
 ]
 
@@ -84,7 +87,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'myimage',
         'USER': 'postgres',
-        'PASSWORD': 'im@geb@ckend',
+        'PASSWORD': '10475',
         'HOST': 'localhost',
         'PORT': '5432',
     },
@@ -92,7 +95,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'myimage-test',
         'USER': 'postgres',
-        'PASSWORD': 'im@geb@ckend',
+        'PASSWORD': '10475',
         'HOST': 'localhost',
         'PORT': '5432',
     },
@@ -103,9 +106,7 @@ DATABASES = {
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",},
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",},
@@ -139,13 +140,40 @@ MEDIA_URL = '/media/'
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        # 'rest_framework.authentication.TokenAuthentication',
-        'auth_api.authentication.BearerAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
+            "rest_framework_simplejwt.authentication.JWTAuthentication",
+        ],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.IsAuthenticated',],
 }
 
-TOKEN_EXPIRE_TIME = datetime.timedelta(days=7)
+
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True
+
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": datetime.timedelta(days=1),
+    "REFRESH_TOKEN_LIFETIME": datetime.timedelta(days=7),
+}
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'custom',
+        },
+    },
+    'formatters': {
+        'custom': {
+            'format': '[{asctime}] ({module}) {levelname}: {message}',
+            'style': '{',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}

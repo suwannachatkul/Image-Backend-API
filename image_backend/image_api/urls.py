@@ -4,9 +4,9 @@ from .views import ImageListView, ImageRetrieveView, ImageUploadView, ImageUpdat
 
 
 urlpatterns = [
-    path('image/', ImageListView.as_view(), name='image-list'),
-    path('image/upload/', ImageUploadView.as_view(), name='image-upload'),
-    path('image/<str:pk>/', ImageRetrieveView.as_view(), name='image-retrieve'),
-    path('image/<str:pk>/update', ImageUpdateView.as_view(), name='image-update'),
-    path('tag/', TagListView.as_view(), name='tag-list'),
+    path('', ImageListView.as_view(), name='image-list'),
+    path('upload/', ImageUploadView.as_view(), name='image-upload'),
+    path('tags/', TagListView.as_view(), name='tag-list'),
+    path('<int:pk>/', ImageRetrieveView.as_view(), name='image-retrieve'),
+    path('<int:pk>/update', ImageUpdateView.as_view(), name='image-update'),
 ]
