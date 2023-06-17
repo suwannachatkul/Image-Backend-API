@@ -1,29 +1,40 @@
+import logging
+
 from django.conf import settings
-from django.contrib.auth import authenticate
-from rest_framework import status
-from rest_framework.authtoken.models import Token
-from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework.views import APIView
+from rest_framework.permissions import AllowAny
+from .serializers import CookieTokenRefreshSerializer
+
+logger = logging.getLogger(__name__)
 
 
-class TokenView(APIView):
+class CookieTokenObtainPairView(TokenObtainPairView):
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        if response.data.get('refresh'):
+            cookie_max_age = settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"]
+            response.set_cookie('refresh_token', response.data['refresh'], max_age=cookie_max_age, httponly=True)
+        return super().finalize_response(request, response, *args, **kwargs)
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        if response.data.get('refresh'):
+            cookie_max_age = settings.SIMPLE_JWT["REFRESH_TOKEN_LIFETIME"]
+            response.set_cookie('refresh_token', response.data['refresh'], max_age=cookie_max_age, httponly=True)
+            del response.data['refresh']
+        return super().finalize_response(request, response, *args, **kwargs)
+
+    serializer_class = CookieTokenRefreshSerializer
+
+class CookieTokenDeleteView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(username=username, password=password)
-
-        if user is not None:
-            token, created = Token.objects.get_or_create(user=user)
-            # TODO implement expired token
-            # if not created and token.expire_at < datetime.now():
-            #     # if token has expired, delete it and create a new one
-            #     token.delete()
-            #     token = Token.objects.create(user=user)
-            # token.expire_at = datetime.now() + settings.TOKEN_EXPIRE_TIME 
-            # token.save()
-            return Response({'token': f'Bearer {token.key}'})
-        else:
-            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        response = Response()
+        response.delete_cookie('refresh_token')
+        response.data = {'message': 'Logout successful. Cookies deleted.'}
+        return response
