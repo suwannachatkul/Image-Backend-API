@@ -1,8 +1,14 @@
+import logging
 import os
 from io import BytesIO
 from typing import Union
 
 import PIL.Image
+
+# Suppress PIL logging
+logging.getLogger("PIL.Image").setLevel(logging.CRITICAL + 1)
+logging.getLogger("PIL.PngImagePlugin").setLevel(logging.CRITICAL + 1)
+
 
 DEFAULT_TARGET_SIZE = 1 * 1024 * 1024
 DEFAULT_MAX_DIMENSION = 2400
