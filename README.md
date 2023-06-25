@@ -56,10 +56,11 @@ The following endpoints are available:
 
 | Endpoint | HTTP Method | Data | Description |
 | -------- | ----------- | --------------- | ----------- |
-| /image_api/image/ | GET | **QueryParams**: ["tags": string, "created_date": datetime, "created_date__after": datetime, "created_date__before": datetime, "random": bool, "limit": int, "offset": int] | Get a list of images |
+| /image_api/image/ | GET | **QueryParams**: ["tags": string, "created_date": datetime, "created_date__after": datetime, "created_date__before": datetime, "random": bool, "limit": int, "offset": int] | Get list of images |
 | /image_api/image/upload | POST | **Body**: {"image": file, "title": string, "description": string, "tags": [string1, string2]} <br /> **QueryParams**: ["file_ext": [ jpg, png, webp ]] | Upload a new image |
 | /image_api/image/:id/ | GET | - | Get details about a specific image by id |
 | /image_api/image/:id/update | PUT,PATCH | **Body**: {"title": string, "description": string, "tags": [string1, string2]} | Update details of an image |
+| /image_api/image/:id/delete | DELETE | - | Delete an image |
 | /image_api/image/tag/ | GET | - | Get a list of all tags |
 
 

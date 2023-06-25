@@ -36,7 +36,7 @@ class ImageUploadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ImageInfo
-        fields = ('image', 'title', 'description', 'tags', 'tags_info')
+        fields = ('id', 'image', 'title', 'description', 'tags', 'tags_info')
 
     def get_tags_info(self, obj):
         tags_data = dict(self.initial_data).get('tags', [])
