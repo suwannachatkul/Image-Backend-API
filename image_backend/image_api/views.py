@@ -49,7 +49,9 @@ class ImageListView(generics.ListAPIView):
 
         if created_date_exact:
             if created_date_after or created_date_before:
-                raise ValidationError("Invalid query parameters. 'created_date' cannot be used with 'created_date__after' or 'created_date__before'.")
+                raise ValidationError(
+                    "Invalid query parameters. 'created_date' cannot be used with 'created_date__after' or 'created_date__before'."
+                )
             date = datetime.strptime(created_date_exact, '%Y-%m-%d')
             queryset = queryset.filter(created_at__date=date)
 
@@ -170,3 +172,19 @@ class ImageUpdateView(generics.UpdateAPIView):
     permission_classes = [IsAuthenticated]
     queryset = ImageInfo.objects.all()
     serializer_class = ImageUpdateSerializer
+
+
+class ImageDeleteView(generics.DestroyAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = ImageInfo.objects.all()
+    serializer_class = ImageSerializer
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        image_id = instance.id
+        image_name = instance.image.name
+        self.perform_destroy(instance)
+
+        response_data = {'message': 'Image deleted successfully.', 'image': {'id': image_id, 'name': image_name}}
+
+        return Response(response_data, status=status.HTTP_204_NO_CONTENT)
