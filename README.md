@@ -1,7 +1,7 @@
 # Image Management API
 
 Image Backend is a project developed based on Django Rest Framework and provides API endpoints for managing and serving images.  
-Also included server-side cookies-based authentication using JWT tokens.
+Also included cookies-based authentication using JWT tokens.
 
 ## Getting Started
 
