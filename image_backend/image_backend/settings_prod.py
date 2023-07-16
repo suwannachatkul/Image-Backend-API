@@ -27,6 +27,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = []
 
+IS_PRODUCTION = True
+
 
 # Application definition
 
