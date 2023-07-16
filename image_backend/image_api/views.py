@@ -2,6 +2,8 @@ import json
 import random
 from datetime import datetime
 
+from auth_api.permissions import (AdminPermission, GuestPermission,
+                                  UserPermission)
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.shortcuts import render
 from rest_framework import generics, status
@@ -12,18 +14,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import ImageInfo, Tag
-from .serializers import ImageSerializer, ImageUpdateSerializer, ImageUploadSerializer, TagSerializer
+from .serializers import (ImageSerializer, ImageUpdateSerializer,
+                          ImageUploadSerializer, TagSerializer)
 from .util.image_util import ImageUtil
 
 
 class TagListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, GuestPermission]
     queryset = Tag.objects.all()
     serializer_class = TagSerializer
 
 
 class ImageListView(generics.ListAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, GuestPermission]
     serializer_class = ImageSerializer
 
     def get_queryset(self):
@@ -84,14 +87,14 @@ class ImageListView(generics.ListAPIView):
 
 
 class ImageRetrieveView(generics.RetrieveAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, GuestPermission]
     queryset = ImageInfo.objects.all()
     serializer_class = ImageSerializer
 
 
 class ImageUploadView(APIView):
     parser_classes = (MultiPartParser, FormParser)
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, UserPermission]
 
     SUPPORT_FILE_EXT = ["jpg", "png", "webp"]
     MAX_IMG_SIZE = 2 * 1024 * 1024  # 2MB
@@ -169,13 +172,13 @@ class ImageUploadView(APIView):
 
 
 class ImageUpdateView(generics.UpdateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, UserPermission]
     queryset = ImageInfo.objects.all()
     serializer_class = ImageUpdateSerializer
 
 
 class ImageDeleteView(generics.DestroyAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, UserPermission]
     queryset = ImageInfo.objects.all()
     serializer_class = ImageSerializer
 
