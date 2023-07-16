@@ -208,6 +208,30 @@ class ImageUpdateTest(APITestCase):
         self.image_info.refresh_from_db()
 
 
+class ImageDeleteTest(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_superuser(username='testuser', password='test')
+        self.admin_group = Group.objects.create(name='admin')
+        self.user.groups.add(self.admin_group)
+        self.client.force_authenticate(user=self.user)
+
+        self.image_info = ImageInfo.objects.create(title='Test Image', description='This is a test image')
+        self.tag1 = Tag.objects.create(name="tag1", name_slug="tag1")
+        self.tag2 = Tag.objects.create(name="tag2", name_slug="tag2")
+        self.image_info.tags.set([self.tag1, self.tag2])
+
+        self.url_image_delete = reverse('image-delete', kwargs={'pk': self.image_info.pk})
+
+        post_delete.disconnect(delete_image_from_s3, sender=ImageInfo)
+
+    def test_image_delete(self):
+        data = {'title': 'New Test Image', 'description': 'This is a new test image', 'tags': ['tag1']}
+        response = self.client.delete(self.url_image_delete, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(ImageInfo.objects.filter(pk=self.image_info.pk).exists())
+
+
 class APIAccessTestCase(APITestCase):
     def setUp(self):
         # Create users and groups
