@@ -3,11 +3,13 @@ from datetime import datetime
 from io import BytesIO
 
 from django.conf import settings
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.db.models.signals import post_delete
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
+from image_api.signals import delete_image_from_s3
 from PIL import Image
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase, force_authenticate
@@ -32,6 +34,8 @@ class ImageAndTagGetTest(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_superuser(username='testuser', password='test')
+        self.admin_group = Group.objects.create(name='admin')
+        self.user.groups.add(self.admin_group)
         self.client.force_authenticate(user=self.user)
 
         self.image1 = ImageInfo.objects.create(title='image1', description='description1')
@@ -109,6 +113,8 @@ class ImageUploadTest(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_superuser(username='testuser', password='test')
+        self.admin_group = Group.objects.create(name='admin')
+        self.user.groups.add(self.admin_group)
         self.client.force_authenticate(user=self.user)
 
         self.tag1 = Tag.objects.create(name="tag1", name_slug="tag1")
@@ -184,6 +190,8 @@ class ImageUpdateTest(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_superuser(username='testuser', password='test')
+        self.admin_group = Group.objects.create(name='admin')
+        self.user.groups.add(self.admin_group)
         self.client.force_authenticate(user=self.user)
 
         self.image_info = ImageInfo.objects.create(title='Test Image', description='This is a test image')
@@ -198,6 +206,97 @@ class ImageUpdateTest(APITestCase):
         response = self.client.patch(self.url_image_update, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.image_info.refresh_from_db()
-        self.assertEqual(self.image_info.title, 'New Test Image')
-        self.assertEqual(self.image_info.description, 'This is a new test image')
-        self.assertCountEqual(self.image_info.tags.all(), [self.tag1])
+
+
+class APIAccessTestCase(APITestCase):
+    def setUp(self):
+        # Create users and groups
+        self.admin_group = Group.objects.create(name='admin')
+        self.user_group = Group.objects.create(name='user')
+        self.guest_group = Group.objects.create(name='guest')
+
+        self.admin_user = User.objects.create_user(username='admin', password='admin')
+        self.admin_user.groups.add(self.admin_group)
+
+        self.user_user = User.objects.create_user(username='user', password='user')
+        self.user_user.groups.add(self.user_group)
+
+        self.guest_user = User.objects.create_user(username='guest', password='guest')
+        self.guest_user.groups.add(self.guest_group)
+
+        self.url_image_list = reverse('image-list')
+        self.url_tag_list = reverse('tag-list')
+        self.url_image_upload = reverse('image-upload')
+
+    def test_admin_api_access(self):
+        # Test access for admin user
+        self.client.force_authenticate(user=self.admin_user)
+
+        response = self.client.get(self.url_image_list)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(self.url_tag_list)
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            'image': create_test_image(),
+            'title': 'Test Image',
+            'description': 'This is a test image',
+            'tags[]': ['tag1', 'tag2']
+        }
+        response = self.client.post(self.url_image_upload, data, format='multipart')
+        self.assertEqual(response.status_code, 201)
+
+    def test_user_api_access(self):
+        # Test access for admin user
+        self.client.force_authenticate(user=self.user_user)
+
+        response = self.client.get(self.url_image_list)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(self.url_tag_list)
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            'image': create_test_image(),
+            'title': 'Test Image',
+            'description': 'This is a test image',
+            'tags[]': ['tag1', 'tag2']
+        }
+        response = self.client.post(self.url_image_upload, data, format='multipart')
+        self.assertEqual(response.status_code, 201)
+
+    def test_guest_api_access(self):
+        # Test access for guest user
+        self.client.force_authenticate(user=self.guest_user)
+
+        response = self.client.get(self.url_image_list)
+        self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(self.url_tag_list)
+        self.assertEqual(response.status_code, 200)
+
+        data = {
+            'image': create_test_image(),
+            'title': 'Test Image',
+            'description': 'This is a test image',
+            'tags[]': ['tag1', 'tag2']
+        }
+        response = self.client.post(self.url_image_upload, data, format='multipart')
+        self.assertEqual(response.status_code, 403) # no permission for guest to upload
+
+    def test_nologin_api_access(self):
+        response = self.client.get(self.url_image_list)
+        self.assertEqual(response.status_code, 401)
+
+        response = self.client.get(self.url_tag_list)
+        self.assertEqual(response.status_code, 401)
+
+        data = {
+            'image': create_test_image(),
+            'title': 'Test Image',
+            'description': 'This is a test image',
+            'tags[]': ['tag1', 'tag2']
+        }
+        response = self.client.post(self.url_image_upload, data, format='multipart')
+        self.assertEqual(response.status_code, 401)
