@@ -206,6 +206,9 @@ class ImageUpdateTest(APITestCase):
         response = self.client.patch(self.url_image_update, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.image_info.refresh_from_db()
+        self.assertEqual(self.image_info.title, 'New Test Image')
+        self.assertEqual(self.image_info.description, 'This is a new test image')
+        self.assertCountEqual(self.image_info.tags.all(), [self.tag1])
 
 
 class ImageDeleteTest(APITestCase):
@@ -269,7 +272,11 @@ class APIAccessTestCase(APITestCase):
             'tags[]': ['tag1', 'tag2']
         }
         response = self.client.post(self.url_image_upload, data, format='multipart')
-        self.assertEqual(response.status_code, 201)
+        try:
+            self.assertEqual(response.status_code, 201)
+        finally:
+            image_info = ImageInfo.objects.get(title='Test Image')
+            os.remove(settings.MEDIA_ROOT + image_info.image.name)
 
     def test_user_api_access(self):
         # Test access for admin user
@@ -288,7 +295,11 @@ class APIAccessTestCase(APITestCase):
             'tags[]': ['tag1', 'tag2']
         }
         response = self.client.post(self.url_image_upload, data, format='multipart')
-        self.assertEqual(response.status_code, 201)
+        try:
+            self.assertEqual(response.status_code, 201)
+        finally:
+            image_info = ImageInfo.objects.get(title='Test Image')
+            os.remove(settings.MEDIA_ROOT + image_info.image.name)
 
     def test_guest_api_access(self):
         # Test access for guest user
