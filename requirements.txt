@@ -6,6 +6,6 @@ djangorestframework==3.14.0
 django-cors-headers
 djangorestframework-simplejwt
 mock==5.0.1
-Pillow==10.0.1
+Pillow==10.2.0
 psycopg2-binary==2.9.6
 gunicorn
